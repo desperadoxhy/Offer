@@ -1,8 +1,11 @@
 package com.sky.controller.user;
 
+import com.google.common.hash.BloomFilter;
+import com.sky.constant.MessageConstant;
 import com.sky.constant.StatusConstant;
 import com.sky.dto.DishDTO;
 import com.sky.entity.Dish;
+import com.sky.exception.ShoppingCartBusinessException;
 import com.sky.result.Result;
 import com.sky.service.DishService;
 import com.sky.vo.DishVO;
@@ -27,6 +30,9 @@ public class DishController {
     @Autowired
     private RedisTemplate redisTemplate;
 
+    @Autowired
+    private BloomFilter<String> bloomFilter;
+
     /**
      * 根据分类id查询菜品
      *
@@ -36,27 +42,37 @@ public class DishController {
     @GetMapping("/list")
     @ApiOperation("根据分类id查询菜品")
     public Result<List<DishVO>> list(Long categoryId) {
-//        构造redis中的key，规则：dish_分类Id
+        //        构造redis中的key，规则：dish_分类Id
         String key = "dish_" + categoryId;
 
-//        查询redis中是否存在菜品数据
-        List<DishVO> list = (List<DishVO>) redisTemplate.opsForValue().get(key);
-        if (list != null && list.size() > 0) {
+        if (bloomFilter.mightContain(String.valueOf(categoryId))) {
+
+            List<DishVO> list = (List<DishVO>) redisTemplate.opsForValue().get(key);
+            if (list != null && list.size() > 0) {
 //            如果存在，直接返回，无需查询数据库
+                return Result.success(list);
+            }
+
+//        如果不存在，查询数据库，将查询到的数据放入redis中
+            Dish dish = new Dish();
+            dish.setCategoryId(categoryId);
+            dish.setStatus(StatusConstant.ENABLE);//查询起售中的菜品
+
+            list = dishService.listWithFlavor(dish);
+
+//        放入redis
+            redisTemplate.opsForValue().set(key, list);
+            bloomFilter.put(String.valueOf(categoryId));
             return Result.success(list);
+        } else {
+            throw new ShoppingCartBusinessException(MessageConstant.SHOPPING_CART_IS_NULL);
         }
 
 
-//        如果不存在，查询数据库，将查询到的数据放入redis中
-        Dish dish = new Dish();
-        dish.setCategoryId(categoryId);
-        dish.setStatus(StatusConstant.ENABLE);//查询起售中的菜品
+//        查询redis中是否存在菜品数据
 
-        list = dishService.listWithFlavor(dish);
 
-//        放入redis
-        redisTemplate.opsForValue().set(key, list);
-        return Result.success(list);
+
     }
 
 

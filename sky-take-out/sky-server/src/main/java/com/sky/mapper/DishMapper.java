@@ -77,4 +77,10 @@ public interface DishMapper {
      * @return
      */
     Integer countByMap(Map map);
+
+    /**
+     * 减少库存
+     * @return
+     */
+    Integer decreaseStockForVersion(Long id, Integer version);
 }
