@@ -1,6 +1,8 @@
 package com.sky.config;
 
 import io.swagger.models.auth.In;
+import org.apache.poi.ss.formula.functions.Intercept;
+import org.apache.poi.ss.formula.functions.T;
 import org.checkerframework.checker.units.qual.A;
 
 import java.util.*;
@@ -772,7 +774,11 @@ public class Solution {
     }
 
 
-
+    /**
+     * 二叉树的中序遍历
+     * @param root
+     * @return
+     */
     public List<Integer> inorderTraversal(TreeNode root) {
         List<Integer> res = new ArrayList<Integer>();
         inorder(root, res);
@@ -836,6 +842,11 @@ public class Solution {
         return Math.max(L, R) + 1; // 返回该节点为根的子树的深度
     }
 
+    /**
+     * 二叉树的层序遍历
+     * @param root
+     * @return
+     */
     public List<List<Integer>> levelOrder(TreeNode root) {
         List<List<Integer>> ret = new ArrayList<List<Integer>>();
         if (root == null) {
@@ -912,42 +923,540 @@ public class Solution {
         return res;
     }
 
+    /**
+     * 二叉树的右视图
+     *使用层序遍历，最右边的节点为所求值
+     * @param root
+     * @return
+     */
     public List<Integer> rightSideView(TreeNode root) {
-        Map<Integer, Integer> rightmostValueAtDepth = new HashMap<Integer, Integer>();
-        int max_depth = -1;
-
-        Deque<TreeNode> nodeStack = new LinkedList<TreeNode>();
-        Deque<Integer> depthStack = new LinkedList<Integer>();
-        nodeStack.push(root);
-        depthStack.push(0);
-
-        while (!nodeStack.isEmpty()) {
-            TreeNode node = nodeStack.pop();
-            int depth = depthStack.pop();
-
-            if (node != null) {
-                // 维护二叉树的最大深度
-                max_depth = Math.max(max_depth, depth);
-
-                // 如果不存在对应深度的节点我们才插入
-                if (!rightmostValueAtDepth.containsKey(depth)) {
-                    rightmostValueAtDepth.put(depth, node.val);
+        List<Integer> res = new ArrayList<>();
+        if (root == null) return res;
+        Queue<TreeNode> queue = new LinkedList<>();
+        queue.offer(root);
+        while (!queue.isEmpty()) {
+            int num = queue.size();
+            for (int i = 0; i < num; i++) {
+                TreeNode node = queue.poll();
+                if (i == num - 1) {
+                    res.add(node.val);
                 }
+                if (node.left != null) {
+                    queue.offer(node.left);
+                }
+                if (node.right != null) {
+                    queue.offer(node.right);
+                }
+            }
+        }
+        return res;
+    }
 
-                nodeStack.push(node.left);
-                nodeStack.push(node.right);
-                depthStack.push(depth + 1);
-                depthStack.push(depth + 1);
+
+    /**
+     * 二叉树转化为链表
+     * 使用栈实现前序遍历
+     * 前序遍历和节点转换同时进行
+     * @param root
+     */
+    public void flatten(TreeNode root) {
+        if (root == null) return;
+        Deque<TreeNode> stack = new LinkedList<TreeNode>();
+        stack.push(root);
+        TreeNode pre = null;
+        while (!stack.isEmpty()) {
+            TreeNode cur = stack.pop();
+
+            if (pre != null) {
+                pre.left = null;
+                pre.right = cur;
+            }
+
+            TreeNode left = cur.left, right = cur.right;
+
+            if (right != null) {
+                stack.push(right);
+            }
+            if (left != null) {
+                stack.push(left);
+            }
+
+            pre = cur;
+        }
+    }
+
+    /**
+     * 从前序序列和中序序列构造二叉树
+     * 采用递归的方法
+     * @param preorder
+     * @param inorder
+     * @return
+     */
+    private Map<Integer, Integer> index;
+
+    public TreeNode buildTree(int[] preorder, int[] inorder){
+        int n = preorder.length;
+        index = new HashMap<Integer, Integer>();
+        for (int i = 0; i < n; i++) {
+            index.put(inorder[i], i);
+        }
+        return myBuildTree(preorder, inorder, 0, n-1, 0, n-1);
+    }
+
+    TreeNode myBuildTree(int[] preorder, int[] inorder, int preorder_left, int preorder_right, int inorder_left, int inorder_right) {
+        if (preorder_left > preorder_right) {
+            return null;
+        }
+        int pre_root = preorder_left;
+        int inorder_root = index.get(preorder[pre_root]);
+
+        TreeNode root = new TreeNode(preorder[preorder_left]);
+
+        int left_size = inorder_root - inorder_left;
+
+        root.left = myBuildTree(preorder, inorder, preorder_left + 1, preorder_left + left_size, inorder_left, inorder_root - 1);
+
+        root.right = myBuildTree(preorder, inorder, preorder_left + left_size + 1, preorder_right, inorder_root + 1, inorder_right);
+
+        return root;
+    }
+
+
+    /**
+     * 路径总和
+     * 使用前缀加状态恢复
+     * 两个节点之间的路径和 = 两个节点之前的前缀之差
+     * 状态用于遍历玩一个节点的所有字节点后，将其从map中去除
+     * @param root
+     * @param targetSum
+     * @return
+     */
+    Map<Long, Integer> prefixMap;
+    int target;
+    public int pathSum(TreeNode root, int targetSum) {
+        prefixMap = new HashMap<>();
+        target = targetSum;
+        prefixMap.put(0L, 1); // 前缀为0的个数至少一个
+        return recur(root, 0);
+    }
+
+    int recur(TreeNode node, long curSum) {
+        if (node == null) {
+            return 0;
+        }
+
+        int res = 0;
+        curSum += node.val; // 得到当前前缀树的值
+
+        res += prefixMap.getOrDefault(curSum - target, 0); //得到需要的前缀树的个数；
+        prefixMap.put(curSum, prefixMap.getOrDefault(curSum, 0) + 1);
+        int left = recur(node.left, curSum);
+        int right = recur(node.right, curSum);
+        prefixMap.put(curSum, prefixMap.get(curSum) - 1);
+        return res + left + right;
+
+    }
+
+    /**
+     * 寻找两个子节点的最近公共祖先
+     *
+     * 递归写法，分别去左边和右边找
+     * @param root
+     * @param p
+     * @param q
+     * @return
+     */
+    public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+        if (root == null || root == p || root == q) return root;
+
+        TreeNode left = lowestCommonAncestor(root.left, p, q);
+        TreeNode right = lowestCommonAncestor(root.right, p, q);
+
+        //p和q都没找到，那就没有
+        if(left == null && right == null) {
+            return null;
+        }
+
+        //左子树没有p也没有q，就返回右子树的结果
+        if(left == null) return right;
+
+        //右子树没有p也没有q就返回左子树的结果
+        if(right == null) return left;
+
+        //左右子树都找到p和q了，那就说明p和q分别在左右两个子树上，所以此时的最近公共祖先就是root
+        return root;
+
+    }
+
+    /**
+     * 二叉树中的最大路径和
+     * 仅使用当前节点、使用当前节点和左子树路径 和 使用当前节点和右子树路径 三者中取最大值进行返回。
+     * 当左右节点路径和不为负数时，说明能够对当前路径起到正向贡献作用，将其添加到路径中
+     */
+    int ans2 = Integer.MIN_VALUE;
+    public int maxPathSum(TreeNode root) {
+        dfs2(root);
+        return ans2;
+    }
+    int dfs2(TreeNode root) {
+        if (root == null) return 0;
+        int left = dfs2(root.left), right = dfs2(root.right);
+        int t = root.val;
+        if (left >= 0) t += left;
+        if (right >= 0) t += right;
+        ans2 = Math.max(ans2, t);
+        return Math.max(root.val, Math.max(left, right) + root.val);
+    }
+
+    /**
+     * 岛屿数量
+     * 每找到一个岛屿，将四周的值都变成0
+     * @param grid
+     * @return
+     */
+    public int numIslands(char[][] grid) {
+        int count = 0;
+        for (int i = 0; i < grid.length; i++){
+            for (int j = 0; j < grid[0].length; j++) {
+                if (grid[i][j] == '1') {
+                    dfs_area(grid, i, j);
+                    count ++;
+                }
+            }
+        }
+        return count;
+    }
+
+
+    private void dfs_area(char[][] grid, int i, int j){
+        if(i < 0 || j < 0 || i >= grid.length || j >= grid[0].length || grid[i][j] == '0') return;
+        grid[i][j] = '0';
+        dfs_area(grid, i + 1, j);
+        dfs_area(grid, i, j + 1);
+        dfs_area(grid, i - 1, j);
+        dfs_area(grid, i, j - 1);
+    }
+
+
+    /**
+     * 岛屿遍历工具
+     * @param grid
+     * @param r
+     * @param c
+     * @return
+     */
+    int area(int[][] grid, int r, int c) {
+        if (!inArea(grid, r, c)) {
+            return 0;
+        }
+        if (grid[r][c] != 1) {
+            return 0;
+        }
+        grid[r][c] = 2;
+
+         area(grid, r - 1, c);
+         area(grid, r + 1, c);
+         area(grid, r, c - 1);
+         area(grid, r, c + 1);
+         return 1;
+    }
+
+    boolean inArea(int[][] grid, int r, int c) {
+        return 0 <= r && r < grid.length
+                && 0 <= c && c < grid[0].length;
+    }
+
+    /**
+     * 腐烂的橘子
+     * BFS 可以用来求最短路径问题。BFS 先搜索到的结点，一定是距离最近的结点。
+     *求腐烂橘子到所有新鲜橘子的最短路径
+     *
+     *在 BFS 中，每遍历到一个橘子（污染了一个橘子），就将新鲜橘子的数量减一。如果 BFS 结束后这个数量仍未减为零，说明存在无法被污染的橘子。
+     * @param grid
+     * @return
+     */
+    public int orangesRotting(int[][] grid) {
+        int M = grid.length;
+        int N = grid[0].length;
+        Queue<int[]> queue = new LinkedList<>();
+
+        int count = 0; // count 表示新鲜橘子的数量
+        for (int r = 0; r < M; r++) {
+            for (int c = 0; c < N; c++) {
+                if (grid[r][c] == 1) {
+                    count++;
+                } else if (grid[r][c] == 2) {
+                    queue.add(new int[]{r, c});
+                }
             }
         }
 
-        List<Integer> rightView = new ArrayList<Integer>();
-        for (int depth = 0; depth <= max_depth; depth++) {
-            rightView.add(rightmostValueAtDepth.get(depth));
+        int round = 0; // round 表示腐烂的轮数，或者分钟数
+        while (count > 0 && !queue.isEmpty()) {
+            round++;
+            int n = queue.size();
+            for (int i = 0; i < n; i++) {
+                int[] orange = queue.poll();
+                int r = orange[0];
+                int c = orange[1];
+                if (r-1 >= 0 && grid[r-1][c] == 1) {
+                    grid[r-1][c] = 2;
+                    count--;
+                    queue.add(new int[]{r-1, c});
+                }
+                if (r+1 < M && grid[r+1][c] == 1) {
+                    grid[r+1][c] = 2;
+                    count--;
+                    queue.add(new int[]{r+1, c});
+                }
+                if (c-1 >= 0 && grid[r][c-1] == 1) {
+                    grid[r][c-1] = 2;
+                    count--;
+                    queue.add(new int[]{r, c-1});
+                }
+                if (c+1 < N && grid[r][c+1] == 1) {
+                    grid[r][c+1] = 2;
+                    count--;
+                    queue.add(new int[]{r, c+1});
+                }
+            }
         }
 
-        return rightView;
+        if (count > 0) {
+            return -1;
+        } else {
+            return round;
+        }
+
     }
+
+    /**
+     * 课程表
+     *  安排图是否是 有向无环图(DAG)
+     *  拓扑排序原理： 对 DAG 的顶点进行排序，使得对每一条有向边 (u,v)(u, v)(u,v)，均有 uuu（在排序记录中）比 vvv 先出现。亦可理解为对某点 vvv 而言，只有当 vvv 的所有源点均出现了，vvv 才能出现。
+     *
+     * i == 0 ： 干净的，未被 DFS 访问
+     * i == -1：其他节点启动的 DFS 访问过了，路径没问题，不需要再访问了
+     * i == 1  ：本节点启动的 DFS 访问过了，一旦遇到了也说明有环了
+     * @param numCourses
+     * @param prerequisites
+     * @return
+     */
+    public boolean canFinish(int numCourses, int[][] prerequisites) {
+        List<List<Integer>> adj = new ArrayList<>();
+        for (int i=0; i < numCourses; i++) {
+            adj.add(new ArrayList<>());
+        }
+        int[] flags = new int[numCourses];
+
+        for(int[] cp : prerequisites) adj.get(cp[1]).add(cp[0]);
+
+        for(int i = 0; i < numCourses; i++) {
+            if(!dfs_corse(adj, flags, i)) return false;
+            return true;
+        }
+
+
+        return true;
+    }
+
+    boolean dfs_corse(List<List<Integer>> adj, int[] flags, int i) {
+        if(flags[i] == 1) return false;
+        if(flags[i] == -1) return true;
+        flags[i] = 1;
+        for(Integer j : adj.get(i))
+            if(!dfs_corse(adj, flags, j)) return false;
+        flags[i] = -1;
+        return true;
+    }
+
+    /**
+     * 爬楼梯
+     * 递归加动态规划
+     * 类似斐波那契数列
+     *
+     * 当为 1 级台阶： 剩 n−1 个台阶，此情况共有 f(n−1) 种跳法。
+     * 当为 2 级台阶： 剩 n−2 个台阶，此情况共有 f(n−2)种跳法。
+     *
+     * f(n)=f(n−1)+f(n−2)
+     * @param n
+     * @return
+     */
+    public int climbStairs(int n) {
+        int a = 1, b = 1, sum;
+        for (int i = 0; i < n -1; i++) {
+            sum = a + b;
+            a = b;
+            b = sum;
+        }
+        return b;
+    }
+
+    /**
+     * 杨辉三角
+     * @param numRows
+     * @return
+     */
+    public List<List<Integer>> generate(int numRows) {
+        List<List<Integer>> ret = new ArrayList<List<Integer>>();
+        for (int i = 0; i < numRows; ++i) {
+            List<Integer> row = new ArrayList<Integer>();
+            for (int j = 0; j <= i; ++j) {
+                if (j == 0 || j == i) {
+                    row.add(1);
+                } else {
+                    row.add(ret.get(i - 1).get(j - 1) + ret.get(i - 1).get(j));
+                }
+            }
+            ret.add(row);
+        }
+        return ret;
+    }
+
+    /**
+     * 打家劫舍
+     * 定义动态规划问题的几个步骤
+     * 1 定义子问题
+     * 2 写出子问题的递推关系
+     * 3 确定DP数组的计算顺序
+     * @param nums
+     * @return
+     */
+    public int rob(int[] nums) {
+        if (nums.length == 0) {
+            return 0;
+        }
+
+        // 子问题：
+        // f(k) = 偷 [0..k) 房间中的最大金额
+
+        // f(0) = 0
+        // f(1) = nums[0]
+        // f(k) = max{ rob(k-1), nums[k-1] + rob(k-2) }
+        int n = nums.length;
+        int[] dp = new int[n+1];
+
+        dp[0] = 0;
+        dp[1] = nums[0];
+        for (int k = 2; k <= n; k++) {
+            dp[k] = Math.max(dp[k-1], nums[k-1] + dp[k-2]);
+        }
+
+        return dp[n];
+
+    }
+
+    /**
+     * 最长回文字符串
+     * 中心扩散法
+     * @param s
+     * @return
+     */
+    public String longestPalindrome1(String s) {
+
+        if (s == null || s.length() == 0) {
+            return "";
+        }
+        int strLen = s.length();
+        int left = 0;
+        int right = 0;
+        int len = 1;
+        int maxStart = 0;
+        int maxLen = 0;
+
+        for (int i = 0; i < strLen; i++) {
+            left = i - 1;
+            right = i + 1;
+            while (left >= 0 && s.charAt(left) == s.charAt(i)) {
+                len++;
+                left--;
+            }
+            while (right < strLen && s.charAt(right) == s.charAt(i)) {
+                len++;
+                right++;
+            }
+            while (left >= 0 && right < strLen && s.charAt(right) == s.charAt(left)) {
+                len = len + 2;
+                left--;
+                right++;
+            }
+            if (len > maxLen) {
+                maxLen = len;
+                maxStart = left;
+            }
+            len = 1;
+        }
+        return s.substring(maxStart + 1, maxStart + maxLen + 1);
+
+    }
+
+    /**
+     * 只出现一次的数字
+     * 使用位运算
+     */
+    public int singleNumber(int[] nums) {
+        int x = 0;
+        for (int num : nums)  // 1. 遍历 nums 执行异或运算
+            x ^= num;
+        return x;            // 2. 返回出现一次的数字 x
+    }
+
+
+    /**
+     * 求众数，摩尔投票法
+     * @param nums
+     * @return
+     */
+    public int majorityElement(int[] nums) {
+        int x = 0, votes = 0;
+        for (int num : nums){
+            if (votes == 0) x = num;
+            votes += num == x ? 1 : -1;
+        }
+        return x;
+    }
+
+    /**
+     * 数组中的第K个最大元素
+     */
+    public int findKthLargest(int[] nums, int k) {
+        int heapSize = nums.length;
+        buildMaxHeap(nums, heapSize);
+        for (int i = nums.length - 1; i >= nums.length - k + 1; --i) {
+            swap(nums, 0, i);
+            --heapSize;
+            maxHeapify(nums, 0, heapSize);
+        }
+        return nums[0];
+    }
+
+    public void buildMaxHeap(int[] a, int heapSize) {
+        for (int i = heapSize / 2; i >= 0; --i) {
+            maxHeapify(a, i, heapSize);
+        }
+    }
+
+    public void maxHeapify(int[] a, int i, int heapSize) {
+        int l = i * 2 + 1, r = i * 2 + 2, largest = i;
+        if (l < heapSize && a[l] > a[largest]) {
+            largest = l;
+        }
+        if (r < heapSize && a[r] > a[largest]) {
+            largest = r;
+        }
+        if (largest != i) {
+            swap(a, i, largest);
+            maxHeapify(a, largest, heapSize);
+        }
+    }
+
+
+
+
+
+
+
+
 
 
 
@@ -981,6 +1490,9 @@ class Node {
     }
 }
 
+/**
+ * LRU 缓存实现
+ */
 class LRUCache {
     class DLinkedNode {
         int key;
