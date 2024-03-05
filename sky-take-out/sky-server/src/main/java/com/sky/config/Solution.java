@@ -1,6 +1,7 @@
 package com.sky.config;
 
 import io.swagger.models.auth.In;
+import org.checkerframework.checker.units.qual.A;
 
 import java.util.*;
 
@@ -348,6 +349,251 @@ public class Solution {
         return Arrays.copyOf(res, idx + 1);
     }
 
+    public int[] productExceptSelf(int[] nums) {
+        int[] res = new int[nums.length];
+        int[] L = new int[nums.length];
+        int[] R = new int[nums.length];
+
+        L[0] = 1;
+        for (int i = 0; i < nums.length -1; i++) {
+            L[i + 1] = nums[i] * L[i];
+        }
+
+        R[nums.length - 1] = 1;
+        for (int i = nums.length - 1; i > 0; i--) {
+            R[i - 1] = R[i] * nums[i];
+        }
+
+        // 对于索引 i，除 nums[i] 之外其余各元素的乘积就是左侧所有元素的乘积乘以右侧所有元素的乘积
+        for (int i = 0; i < nums.length; i++) {
+            res[i] = L[i] * R[i];
+        }
+
+
+
+        return res;
+
+    }
+
+    public int firstMissingPositive(int[] nums) {
+        int n = nums.length;
+        for (int i = 0; i < n; ++i) {
+            while (nums[i] > 0 && nums[i] <= n && nums[nums[i] - 1] != nums[i]) {
+                swap(nums, nums[i] - 1, i);
+            }
+        }
+        for (int i = 0; i < n; ++i) {
+            if (nums[i] != i + 1) {
+                return i + 1;
+            }
+        }
+        return n + 1;
+    }
+
+    public void setZeroes(int[][] matrix) {
+        int row = matrix.length;
+        int col = matrix[0].length;
+        boolean row0_flag = false;
+        boolean col0_flag = false;
+        // 第一行是否有零
+        for (int j = 0; j < col; j++) {
+            if (matrix[0][j] == 0) {
+                row0_flag = true;
+                break;
+            }
+        }
+        // 第一列是否有零
+        for (int i = 0; i < row; i++) {
+            if (matrix[i][0] == 0) {
+                col0_flag = true;
+                break;
+            }
+        }
+        // 把第一行第一列作为标志位
+        for (int i = 1; i < row; i++) {
+            for (int j = 1; j < col; j++) {
+                if (matrix[i][j] == 0) {
+                    matrix[i][0] = matrix[0][j] = 0;
+                }
+            }
+        }
+        // 置0
+        for (int i = 1; i < row; i++) {
+            for (int j = 1; j < col; j++) {
+                if (matrix[i][0] == 0 || matrix[0][j] == 0) {
+                    matrix[i][j] = 0;
+                }
+            }
+        }
+        if (row0_flag) {
+            for (int j = 0; j < col; j++) {
+                matrix[0][j] = 0;
+            }
+        }
+        if (col0_flag) {
+            for (int i = 0; i < row; i++) {
+                matrix[i][0] = 0;
+            }
+        }
+    }
+
+    public List<Integer> spiralOrder(int[][] matrix) {
+        if (matrix.length == 0)
+            return new ArrayList<Integer>();
+        int l = 0, r = matrix[0].length - 1, t = 0, b = matrix.length - 1, x = 0;
+        Integer[] res = new Integer[(r + 1) * (b + 1)];
+        while (true) {
+            for (int i = l; i <= r; i++) res[x++] = matrix[t][i]; // left to right
+            if (++t > b) break;
+            for (int i = t; i <= b; i++) res[x++] = matrix[i][r]; // top to bottom
+            if (l > --r) break;
+            for (int i = r; i >= l; i--) res[x++] = matrix[b][i]; // right to left
+            if (t > --b) break;
+            for (int i = b; i >= t; i--) res[x++] = matrix[i][l]; // bottom to top
+            if (++l > r) break;
+        }
+        return Arrays.asList(res);
+    }
+
+    public void rotate(int[][] matrix) {
+        int n = matrix.length;
+        for (int i = 0; i < n / 2; ++i) {
+            for (int j = 0; j < (n + 1) / 2; ++j) {
+                int temp = matrix[i][j];
+                matrix[i][j] = matrix[n - j - 1][i];
+                matrix[n - j - 1][i] = matrix[n - i - 1][n - j - 1];
+                matrix[n - i - 1][n - j - 1] = matrix[j][n - i - 1];
+                matrix[j][n - i - 1] = temp;
+            }
+        }
+    }
+
+
+    public boolean searchMatrix(int[][] matrix, int target) {
+        int i = matrix.length - 1, j = 0;
+        while(i >= 0 && j < matrix[0].length)
+        {
+            if(matrix[i][j] > target) i--;
+            else if(matrix[i][j] < target) j++;
+            else return true;
+        }
+        return false;
+    }
+
+
+     public class ListNode {
+         int val;
+         ListNode next;
+         ListNode() {}
+         ListNode(int val) { this.val = val; }
+         ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+     }
+
+
+    public ListNode mergeTwoLists(ListNode list1, ListNode list2) {
+        ListNode a = new ListNode();
+        ListNode cur = a;
+
+        while (list1 != null && list2 != null) {
+            if (list1.val < list2.val) {
+                cur.next = list1;
+                list1 = list1.next;
+                cur = cur.next;
+            } else {
+                cur.next = list1;
+                list1 = list1.next;
+                cur = cur.next;
+            }
+        }
+
+        cur.next = list1 != null ? list1 : list2;
+        return a.next;
+
+    }
+
+    public ListNode addTwoNumbers(ListNode l1, ListNode l2) {
+        ListNode pre = new ListNode(0);
+        ListNode cur = pre;
+        int carry = 0;
+        while(l1 != null || l2 != null) {
+            int x = l1 == null ? 0 : l1.val;
+            int y = l2 == null ? 0 : l2.val;
+            int sum = x + y + carry;
+
+            carry = sum / 10;
+            sum = sum % 10;
+            cur.next = new ListNode(sum);
+
+            cur = cur.next;
+            if(l1 != null)
+                l1 = l1.next;
+            if(l2 != null)
+                l2 = l2.next;
+        }
+        if(carry == 1) {
+            cur.next = new ListNode(carry);
+        }
+        return pre.next;
+    }
+
+
+    public ListNode removeNthFromEnd(ListNode head, int n) {
+        ListNode pre = new ListNode();
+        pre.next = head;
+        ListNode fast = pre;
+        ListNode slow = pre;
+        for (int i =0; i < n; i++) {
+            fast = fast.next;
+        }
+        while (fast.next != null) {
+            fast = fast.next;
+            slow = slow.next;
+        }
+
+        slow.next = slow.next.next;
+
+        return pre.next;
+    }
+
+
+    public ListNode swapPairs(ListNode head) {
+        ListNode pre = new ListNode(0);
+        pre.next = head;
+        ListNode temp = pre;
+        while(temp.next != null && temp.next.next != null) {
+            ListNode start = temp.next;
+            ListNode end = temp.next.next;
+            temp.next = end;
+            start.next = end.next;
+            end.next = start;
+            temp = start;
+        }
+        return pre.next;
+    }
+
+    /**
+     * 递归解法
+     * @param head
+     * @return
+     */
+    public ListNode swapPairs2(ListNode head) {
+        if(head == null || head.next == null){
+            return head;
+        }
+
+        ListNode next = head.next;
+        head.next = swapPairs(next.next);
+        next.next = head;
+        return next;
+
+    }
+
+
+
+
+
+
+
 
 
 
@@ -371,13 +617,464 @@ public class Solution {
         nums[right] = temp;
     }
 
+    public ListNode reverseKGroup(ListNode head, int k) {
+        ListNode pre = new ListNode(0);
+        pre.next = head;
+
+        ListNode begin = pre;
+        ListNode end = pre;
+
+        while (end.next != null) {
+            for (int i = 0; i < k && end != null; i++) {
+                end = end.next;
+            }
+            if (end == null) {
+                break;
+            }
+            ListNode start = begin.next;
+            ListNode next = end.next;
+            end.next = null;
+            begin.next = reverse(start);
+            start.next = next;
+            end = begin;
+
+
+        }
+
+        return pre.next;
+
+    }
+
+    private ListNode reverse(ListNode head) {
+        ListNode pre = null;
+        ListNode curr = head;
+        while (curr != null) {
+            ListNode next = curr.next;
+            curr.next = pre;
+            pre = curr;
+            curr = next;
+        }
+        return pre;
+    }
+
+    public Node copyRandomList(Node head) {
+        if(head == null) return null;
+        Node cur = head;
+        Map<Node, Node> map = new HashMap<>();
+        // 3. 复制各节点，并建立 “原节点 -> 新节点” 的 Map 映射
+        while(cur != null) {
+            map.put(cur, new Node(cur.val));
+            cur = cur.next;
+        }
+        cur = head;
+        // 4. 构建新链表的 next 和 random 指向
+        while(cur != null) {
+            map.get(cur).next = map.get(cur.next);
+            map.get(cur).random = map.get(cur.random);
+            cur = cur.next;
+        }
+        // 5. 返回新链表的头节点
+        return map.get(head);
+    }
+
+    public ListNode sortList(ListNode head) {
+        return mergeSort(head);
+    }
+
+    /**
+     * 对给定的链表进行归并排序
+     */
+    ListNode mergeSort(ListNode head){
+        // 如果链表为空或只有一个节点，无需排序直接返回
+        if(head == null || head.next == null){
+            return head;
+        }
+        // 获取链表的中间节点，分别对左右子链表进行排序
+        ListNode mid = getMid(head);
+        ListNode rightSorted = mergeSort(mid.next);   // 排序右子链表
+        mid.next = null;                     // 断开两段子链表
+        ListNode leftSorted = mergeSort(head);         // 排序左子链表
+        return mergeTwoLists2(leftSorted, rightSorted);  // 两个子链表必然有序，合并两个有序的链表
+    }
+
+    /**
+     * 获取以head为头节点的链表中间节点
+     * 如果链表长度为奇数，返回最中间的那个节点
+     * 如果链表长度为偶数，返回中间靠左的那个节点
+     */
+    ListNode getMid(ListNode head){
+        if(head == null)return head;
+        ListNode slow = head, fast = head.next;          // 快慢指针，慢指针初始为
+        while(fast != null && fast.next != null)
+        {
+            fast = fast.next.next;    // 快指针每次移动两个节点
+            slow = slow.next;         // 慢指针每次移动一个节点
+        }
+        return slow;    // 快指针到达链表尾部时，慢指针即指向中间节点
+    }
+
+    /**
+     * 合并两个有序链表list1和list2
+     */
+    ListNode mergeTwoLists2(ListNode list1, ListNode list2) {
+        ListNode dummy = new ListNode();   // 伪头节点，用于定位合并链表的头节点
+        ListNode node = dummy;             // 新链表当前的最后一个节点，初始为伪头节点
+        // 直到两个链表都遍历完了，合并结束
+        while(list1 != null || list2 != null){
+            int val1 = list1 == null ? 50001 : list1.val;   // 如果链表1已经遍历完，val1取最大值，保证链表2的节点被选择到
+            int val2 = list2 == null ? 50001 : list2.val;   // 如果链表2已经遍历完，val2取最大值，保证链表1的节点被选择到
+            if(val1 < val2){
+                // 链表1的节点值更小，加入到合并链表，并更新链表1指向的节点
+                node.next = list1;
+                list1 = list1.next;
+            }else{
+                // 链表2的节点值更小，加入到合并链表，并更新链表2指向的节点
+                node.next = list2;
+                list2 = list2.next;
+            }
+            node = node.next;    // 更新合并链表当前的最后一个节点指向
+        }
+        return dummy.next;       // 伪头节点的下一个节点即为合并链表的头节点
+    }
+
+    public ListNode mergeKLists(ListNode[] lists) {
+        ListNode res = null;
+        for (ListNode list: lists) {
+            res = mergeTwoLists2(res, list);
+        }
+        return res;
+    }
+
+
+    class LRUCache extends LinkedHashMap<Integer, Integer>{
+
+        private int capacity;
+
+        public LRUCache(int capacity) {
+            super(capacity, 0.75F, true);
+            this.capacity = capacity;
+        }
+
+        public int get(int key) {
+            return super.getOrDefault(key, -1);
+        }
+
+        // 这个可不写
+        public void put(int key, int value) {
+            super.put(key, value);
+        }
+
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<Integer, Integer> eldest) {
+            return size() > capacity;
+        }
+
+    }
+
+
+
+    public List<Integer> inorderTraversal(TreeNode root) {
+        List<Integer> res = new ArrayList<Integer>();
+        inorder(root, res);
+        return res;
+    }
+
+    public void inorder(TreeNode root, List<Integer> res) {
+        if (root == null) {
+            return;
+        }
+        inorder(root.left, res);
+        res.add(root.val);
+        inorder(root.right, res);
+    }
+
+    public int maxDepth(TreeNode root) {
+        if (root == null) return 0;
+        return Math.max(maxDepth(root.left), maxDepth(root.right)) + 1;
+    }
+
+
+
+    public TreeNode invertTree(TreeNode root) {
+        if (root == null) {
+            return null;
+        }
+        TreeNode left = invertTree(root.left);
+        TreeNode right = invertTree(root.right);
+        root.left = right;
+        root.right = left;
+        return root;
+    }
+
+    public boolean isSymmetric(TreeNode root) {
+        return check(root, root);
+    }
+
+    public boolean check(TreeNode p, TreeNode q) {
+        if (p == null && q == null) {
+            return true;
+        }
+        if (p == null || q == null) {
+            return false;
+        }
+        return p.val == q.val && check(p.left, q.right) && check(p.right, q.left);
+    }
+
+    int ans;
+    public int diameterOfBinaryTree(TreeNode root) {
+        ans = 1;
+        depth(root);
+        return ans - 1;
+    }
+    public int depth(TreeNode node) {
+        if (node == null) {
+            return 0; // 访问到空节点了，返回0
+        }
+        int L = depth(node.left); // 左儿子为根的子树的深度
+        int R = depth(node.right); // 右儿子为根的子树的深度
+        ans = Math.max(ans, L+R+1); // 计算d_node即L+R+1 并更新ans
+        return Math.max(L, R) + 1; // 返回该节点为根的子树的深度
+    }
+
+    public List<List<Integer>> levelOrder(TreeNode root) {
+        List<List<Integer>> ret = new ArrayList<List<Integer>>();
+        if (root == null) {
+            return ret;
+        }
+
+        Queue<TreeNode> queue = new LinkedList<TreeNode>();
+        queue.offer(root);
+        while (!queue.isEmpty()) {
+            List<Integer> level = new ArrayList<>();
+            int size = queue.size();
+            for (int i =1; i <= size; i++){
+                TreeNode node = queue.poll();
+                level.add(node.val);
+                if (node.left != null) {
+                    queue.offer(node.left);
+                }
+                if (node.right != null) {
+                    queue.offer(node.right);
+                }
+            }
+            ret.add(level);
+
+
+        }
+        return ret;
+
+    }
+
+
+    public TreeNode sortedArrayToBST(int[] nums) {
+        return helper(nums, 0, nums.length - 1);
+    }
+
+    public TreeNode helper(int[] nums, int left, int right) {
+        if (left > right) {
+            return null;
+        }
+
+        // 总是选择中间位置左边的数字作为根节点
+        int mid = (left + right) / 2;
+
+        TreeNode root = new TreeNode(nums[mid]);
+        root.left = helper(nums, left, mid - 1);
+        root.right = helper(nums, mid + 1, right);
+        return root;
+    }
+
+    public boolean isValidBST(TreeNode root) {
+        return isValidBST(root, Long.MIN_VALUE, Long.MAX_VALUE);
+    }
+
+    public boolean isValidBST(TreeNode node, long lower, long upper) {
+        if (node == null) {
+            return true;
+        }
+        if (node.val <= lower || node.val >= upper) {
+            return false;
+        }
+        return isValidBST(node.left, lower, node.val) && isValidBST(node.right, node.val, upper);
+    }
+
+    int res, k;
+    void dfs(TreeNode root) {
+        if (root == null) return;
+        dfs(root.left);
+        if (k == 0) return;
+        if (--k == 0) res = root.val;
+        dfs(root.right);
+    }
+    public int kthSmallest(TreeNode root, int k) {
+        this.k = k;
+        dfs(root);
+        return res;
+    }
+
+    public List<Integer> rightSideView(TreeNode root) {
+        Map<Integer, Integer> rightmostValueAtDepth = new HashMap<Integer, Integer>();
+        int max_depth = -1;
+
+        Deque<TreeNode> nodeStack = new LinkedList<TreeNode>();
+        Deque<Integer> depthStack = new LinkedList<Integer>();
+        nodeStack.push(root);
+        depthStack.push(0);
+
+        while (!nodeStack.isEmpty()) {
+            TreeNode node = nodeStack.pop();
+            int depth = depthStack.pop();
+
+            if (node != null) {
+                // 维护二叉树的最大深度
+                max_depth = Math.max(max_depth, depth);
+
+                // 如果不存在对应深度的节点我们才插入
+                if (!rightmostValueAtDepth.containsKey(depth)) {
+                    rightmostValueAtDepth.put(depth, node.val);
+                }
+
+                nodeStack.push(node.left);
+                nodeStack.push(node.right);
+                depthStack.push(depth + 1);
+                depthStack.push(depth + 1);
+            }
+        }
+
+        List<Integer> rightView = new ArrayList<Integer>();
+        for (int depth = 0; depth <= max_depth; depth++) {
+            rightView.add(rightmostValueAtDepth.get(depth));
+        }
+
+        return rightView;
+    }
+
+
+
 
 
 
     public static void main(String[] args) {
         Solution s = new Solution();
-        int[] arr = {1,3,-1,-3,5,3,6,7};
-        int[] res = s.maxSlidingWindow(arr,3);
+        int[][] arr = new int[][]{
+                {1, 4, 7, 11, 15},
+                {2, 5, 8, 12, 19},
+                {3, 6, 9, 16, 22},
+                {10, 13, 14, 17, 24},
+                {18, 21, 23, 26, 30}
+        };
+
+        boolean res = s.searchMatrix(arr,5);
         System.out.println(res);
     }
 }
+
+class Node {
+    int val;
+    Node next;
+    Node random;
+
+    public Node(int val) {
+        this.val = val;
+        this.next = null;
+        this.random = null;
+    }
+}
+
+class LRUCache {
+    class DLinkedNode {
+        int key;
+        int value;
+        DLinkedNode prev;
+        DLinkedNode next;
+        public DLinkedNode() {}
+        public DLinkedNode(int _key, int _value) {key = _key; value = _value;}
+    }
+
+    private Map<Integer, DLinkedNode> cache = new HashMap<Integer, DLinkedNode>();
+    private int size;
+    private int capacity;
+    private DLinkedNode head, tail;
+
+    public LRUCache(int capacity) {
+        this.size = 0;
+        this.capacity = capacity;
+        // 使用伪头部和伪尾部节点
+        head = new DLinkedNode();
+        tail = new DLinkedNode();
+        head.next = tail;
+        tail.prev = head;
+    }
+
+    public int get(int key) {
+        DLinkedNode node = cache.get(key);
+        if (node == null) {
+            return -1;
+        }
+        // 如果 key 存在，先通过哈希表定位，再移到头部
+        moveToHead(node);
+        return node.value;
+    }
+
+    public void put(int key, int value) {
+        DLinkedNode node = cache.get(key);
+        if (node == null) {
+            // 如果 key 不存在，创建一个新的节点
+            DLinkedNode newNode = new DLinkedNode(key, value);
+            // 添加进哈希表
+            cache.put(key, newNode);
+            // 添加至双向链表的头部
+            addToHead(newNode);
+            ++size;
+            if (size > capacity) {
+                // 如果超出容量，删除双向链表的尾部节点
+                DLinkedNode tail = removeTail();
+                // 删除哈希表中对应的项
+                cache.remove(tail.key);
+                --size;
+            }
+        }
+        else {
+            // 如果 key 存在，先通过哈希表定位，再修改 value，并移到头部
+            node.value = value;
+            moveToHead(node);
+        }
+    }
+
+    private void addToHead(DLinkedNode node) {
+        node.prev = head;
+        node.next = head.next;
+        head.next.prev = node;
+        head.next = node;
+    }
+
+    private void removeNode(DLinkedNode node) {
+        node.prev.next = node.next;
+        node.next.prev = node.prev;
+    }
+
+    private void moveToHead(DLinkedNode node) {
+        removeNode(node);
+        addToHead(node);
+    }
+
+    private DLinkedNode removeTail() {
+        DLinkedNode res = tail.prev;
+        removeNode(res);
+        return res;
+    }
+}
+
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode() {}
+    TreeNode(int val) { this.val = val; }
+    TreeNode(int val, TreeNode left, TreeNode right) {
+        this.val = val;
+        this.left = left;
+        this.right = right;
+    }
+}
+
